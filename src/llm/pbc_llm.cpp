@@ -230,6 +230,20 @@ PBC_LLMResult PBC_CallLLMWithConfig(const PBC_APIConfig& cfg,
                 }
                 text = resp["message"]["content"].get<std::string>();
 
+                // Strip leaked Qwen-style thinking blocks before the response
+                // is stored in history or shown in-game.
+                auto thinkEnd = text.rfind("</think>");
+                if (thinkEnd != std::string::npos)
+                {
+                    text = text.substr(thinkEnd + 8);
+
+                    auto first = text.find_first_not_of(" \t\r\n");
+                    if (first != std::string::npos)
+                        text.erase(0, first);
+                    else
+                        text.clear();
+                }
+
                 // Usage: prompt_eval_count (input) + eval_count (output).
                 // These fields are often absent for some models — treat missing as zero.
                 int inputTokens  = resp.value("prompt_eval_count", 0);
