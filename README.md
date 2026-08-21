@@ -79,9 +79,36 @@ Copy `env/dist/etc/modules/playerbots_characters.conf.dist` as `env/dist/etc/mod
 
 ### Model Connection Setup
 
+PBC does not include or host an AI model. You must connect it to a compatible local model server or cloud API for AI-generated conversation. Without one, AzerothCore and the underlying playerbots still follow, fight, quest, and accept normal commands, but PBC conversation is unavailable.
+
+#### Local Ollama quick start
+
+For a private local setup, install [Ollama](https://ollama.com/) and download a model. `qwen3:14b` is a reasonable starting point for conversation quality and speed; smaller models may respond faster but can become less consistent as character history grows.
+
+```bash
+ollama pull qwen3:14b
+ollama serve
+```
+
+Copy the supplied connection example and edit the new file to select your model:
+
+```bash
+cd modules/mod-pbc/connections
+cp ollama.jsonc.example my-connection.jsonc
+```
+
+Use `http://127.0.0.1:11434` when worldserver runs directly on the same machine. With the standard Docker setup, use `http://host.docker.internal:11434` so the container can reach Ollama on the host. Point `PBC.DefaultConnection` and any task-specific connection settings at the new file.
+
 Each LLM connection is defined in a standalone JSONC file (JSON with comments). To get started, pick one of the ready-made `.jsonc.example` templates in the [`connections/`](connections/) directory, copy it to a new file **without** the `.example` suffix, and point the relevant config parameter at it. For the full setup guide — supported API types, config parameters, tested providers and per-task routing — see [Model Connections](docs/CONNECTIONS.md).
 
 After configuring, use `.chars connection-test` (optionally with a connection name like `utility`) to verify that a connection is working.
+
+> [!CAUTION]
+> Never commit API keys, private connection files, local character cards, conversation logs, or database backups. Cloud providers receive the prompt and its relevant character history, memories, scene context, and current event; review the provider's privacy and retention terms before use.
+
+#### Running without an AI backend
+
+PBC is a personality and conversation layer; it does not replace the underlying playerbot gameplay AI. Without a working model connection, bots still perform their normal gameplay behavior, but cannot produce PBC-generated conversation. To use traditional playerbot chatter instead, disable PBC and restore the desired `AiPlayerbot` chat settings in `playerbots.conf`.
 
 > [!IMPORTANT]
 > Due to the complexity and length of the prompts, locally-run models on average home hardware will generally struggle and produce low-quality output as context grows. A cloud-based model with a large context window is recommended. Make sure to also adjust `PBC.MaxHistoryCtx` accordingly — a good starting point is around 25% of the model's total context window. Aim for at least 32k in general, anything less could lead to poor efficiency of character relationship tracking and memory extraction.
