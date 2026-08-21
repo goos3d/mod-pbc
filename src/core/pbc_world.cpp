@@ -367,6 +367,7 @@ void PBC_WorldScript::OnUpdate(uint32_t diff)
                 if (bot && bot->IsInWorld())
                 {
                     uint32_t ct = action.chatType;
+                    ChatMsg sentType = static_cast<ChatMsg>(ct);
 
                     if (ct == CHAT_MSG_WHISPER && !action.targetGuid.IsEmpty())
                     {
@@ -384,6 +385,7 @@ void PBC_WorldScript::OnUpdate(uint32_t diff)
                             ChatMsg msgType = grp->IsLeader(bot->GetGUID())
                                 ? CHAT_MSG_PARTY_LEADER
                                 : CHAT_MSG_PARTY;
+                            sentType = msgType;
                             WorldPacket data;
                             ChatHandler::BuildChatPacket(data, msgType, LANG_UNIVERSAL, bot, nullptr, action.text);
                             grp->BroadcastPacket(&data, false, grp->GetMemberGroup(bot->GetGUID()));
@@ -407,6 +409,7 @@ void PBC_WorldScript::OnUpdate(uint32_t diff)
                                 msgType = CHAT_MSG_RAID_LEADER;
                             else
                                 msgType = CHAT_MSG_RAID;
+                            sentType = msgType;
                             WorldPacket data;
                             ChatHandler::BuildChatPacket(data, msgType, LANG_UNIVERSAL, bot, nullptr, action.text);
                             grp->BroadcastPacket(&data, false);
@@ -425,8 +428,9 @@ void PBC_WorldScript::OnUpdate(uint32_t diff)
                         bot->Say(action.text, LANG_UNIVERSAL);
                     }
 
-                    PBC_Log(PBC_LogLevel::PBC_DEBUG, "OnUpdate: sent chat for character={} type={}",
-                                 bot->GetName(), ct);
+                    PBC_Log(PBC_LogLevel::PBC_DEBUG,
+                            "OnUpdate: sent chat for character={} requestedType={} sentType={}",
+                            bot->GetName(), ct, sentType);
                 }
             }
 
